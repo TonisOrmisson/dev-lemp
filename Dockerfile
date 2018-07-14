@@ -55,20 +55,8 @@ RUN tar xvzf geckodriver-v0.21.0-linux64.tar.gz
 RUN apt install -y default-jre
 
 #install xdebug (code-coverage)
-
-RUN apk update \
-    && apk add  --no-cache libmcrypt libmcrypt-dev \
-    && apk add --no-cache --virtual build-dependencies icu-dev \
-    libxml2-dev freetype-dev libpng-dev libjpeg-turbo-dev g++ make autoconf \
-    && docker-php-source extract \
-    && pecl install xdebug \
-    && docker-php-ext-enable xdebug redis \
-    && docker-php-source delete \
-    && apk del build-dependencies \
-    && apk del libmcrypt-dev \
-    && rm -rf /tmp/*
-
-COPY xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
+RUN apt install php-xdebug
+COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 
 # Expose Ports
 EXPOSE 443
