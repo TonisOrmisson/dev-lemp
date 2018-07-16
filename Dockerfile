@@ -31,7 +31,8 @@ RUN service mysql start && \
 
 
 # install php
-RUN apt install -y php-fpm php-cli php-mysql php-curl php-gd php-imap php-zip php-ldap php-xml php-mbstring
+RUN apt install -y php-fpm php-cli php-mysql php-curl php-gd php-imap php-zip php-ldap \
+    php-xml php-mbstring php-intl php-soap
 
 # start webserver
 RUN service php7.2-fpm start
@@ -64,6 +65,10 @@ RUN apt install -y default-jre
 #install xdebug (code-coverage)
 RUN apt install php-xdebug
 COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
+
+#dumb-init
+RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64.deb
+RUN dpkg -i dumb-init_*.deb
 
 # Expose Ports
 EXPOSE 443
