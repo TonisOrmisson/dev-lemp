@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt update && apt-get install -y --no-install-recommends apt-utils
 
 # generic tools
-RUN apt install -y nano wget net-tools git unzip curl
+RUN apt install -y nano wget net-tools git unzip curl iputils-ping telnet
 
 # nginx
 RUN apt install -y nginx
