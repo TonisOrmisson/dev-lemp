@@ -22,6 +22,13 @@ RUN echo mysql-server mysql-server/root_password password root | debconf-set-sel
 RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/mysql.conf.d/mysqld.cnf
 RUN find /var/lib/mysql -type f -exec touch {} \; && service mysql start
 
+## allow mysql user connections from any host
+RUN service mysql start && mysql -uroot -proot mysql  -e "update user set host='%' where user='root' and host='localhost';flush privileges;"
+
+## create a default test database
+RUN service mysql start && \
+    mysqladmin -uroot -proot create test
+
 
 # install php
 RUN apt install -y php-fpm php-cli php-mysql php-curl php-gd php-imap php-zip php-ldap php-xml php-mbstring
