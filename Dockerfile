@@ -27,12 +27,12 @@ RUN service mysql start && mysql -uroot -proot mysql  -e "update user set host='
 
 ## create a default test database
 RUN service mysql start && \
-    mysqladmin -uroot -proot create test
+    mysql -uroot -proot -e "create database test;"
 
 
 # install php
 RUN apt install -y php-fpm php-cli php-mysql php-curl php-gd php-imap php-zip php-ldap \
-    php-xml php-mbstring php-intl php-soap
+    php-xml php-mbstring php-intl php-soap php-bcmath
 
 # start webserver
 RUN service php7.2-fpm start
@@ -85,5 +85,5 @@ ADD html/ /var/www/html/
 RUN cat /var/www/html/index.php
 WORKDIR /var/www/html
 
-CMD sh /start.sh
+ENTRYPOINT ["dumb-init", "--", "/start.sh"]
 ENV DEBIAN_FRONTEND teletype
