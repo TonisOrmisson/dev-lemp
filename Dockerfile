@@ -70,6 +70,11 @@ COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64.deb
 RUN dpkg -i dumb-init_*.deb
 
+# docker-compose
+RUN curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+RUN chmod +x /usr/local/bin/docker-compose
+RUN docker-compose --version
+
 # Expose Ports
 EXPOSE 443
 EXPOSE 80

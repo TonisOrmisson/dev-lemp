@@ -8,3 +8,6 @@ A docker LEMP image for development &amp; testing
  - Nginx
  - MySql 
  
+ 
+# example run
+docker run -d --network=dev1 --name lemptest -p 8888:80 tonisormisson/dev-lemp:latest
