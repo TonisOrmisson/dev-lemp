@@ -2,7 +2,7 @@ FROM ubuntu:bionic
 ENV DEBIAN_FRONTEND noninteractive
 
 # update
-RUN apt update && apt-get install -y --no-install-recommends apt-utils
+RUN apt update && apt-get install -y --no-install-recommends apt-utils systemd
 
 # generic tools
 RUN apt install -y nano wget net-tools git unzip curl iputils-ping telnet dnsutils nmap
@@ -69,6 +69,12 @@ COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 #dumb-init
 RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64.deb
 RUN dpkg -i dumb-init_*.deb
+
+# docker
+RUN curl -fsSL get.docker.com | CHANNEL=stable sh
+RUN service docker start && docker --version
+
+
 
 # docker-compose
 RUN curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
