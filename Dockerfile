@@ -81,6 +81,11 @@ RUN curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-co
 RUN chmod +x /usr/local/bin/docker-compose
 RUN docker-compose --version
 
+# Include useful functions to start/stop docker daemon in garden-runc containers in Concourse CI.
+# Example: source /docker-lib.sh && start_docker
+# credits https://github.com/meAmidos/dcind
+COPY docker-lib.sh /docker-lib.sh
+
 # Expose Ports
 EXPOSE 443
 EXPOSE 80
