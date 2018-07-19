@@ -1,11 +1,12 @@
-FROM ubuntu:bionic
-ENV DEBIAN_FRONTEND noninteractive
+FROM ubuntu:xenial
+MAINTAINER Tõnis Ormisson <tonis@andmemasin.eu>
 
 # update
 RUN apt update && apt-get install -y --no-install-recommends apt-utils systemd
 
 # generic tools
-RUN apt install -y nano wget net-tools git unzip curl iputils-ping telnet dnsutils nmap
+RUN apt install -y nano wget net-tools git unzip curl iputils-ping telnet dnsutils nmap \
+    software-properties-common apt-transport-https
 
 # nginx
 RUN apt install -y nginx
@@ -22,17 +23,23 @@ RUN echo mysql-server mysql-server/root_password password root | debconf-set-sel
 RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/mysql.conf.d/mysqld.cnf
 RUN find /var/lib/mysql -type f -exec touch {} \; && service mysql start
 
-## allow mysql user connections from any host
-RUN service mysql start && mysql -uroot -proot mysql  -e "update user set host='%' where user='root' and host='localhost';flush privileges;"
+## aallow mysql user connections from any host
+RUN find /var/lib/mysql -type f -exec touch {} \; && service mysql start && service mysql start && mysql -uroot -proot mysql  -e "update user set host='%' where user='root' and host='localhost';flush privileges; CREATE DATABASE test;"
 
-## create a default test database
-RUN service mysql start && \
-    mysql -uroot -proot -e "create database test;"
 
 
 # install php
-RUN apt install -y php-fpm php-cli php-mysql php-curl php-gd php-imap php-zip php-ldap \
-    php-xml php-mbstring php-intl php-soap php-bcmath
+RUN LC_ALL=C.UTF-8  add-apt-repository ppa:ondrej/php
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php7.2 php7.2-fpm php7.2-cli php7.2-mysql php7.2-curl php7.2-gd \
+    php7.2-imap php7.2-zip php7.2-ldap php7.2-xml php7.2-mbstring php7.2-intl php7.2-soap php7.2-bcmath
+
+# docker
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+RUN LC_ALL=C.UTF-8 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+RUN apt update && apt install -y docker-ce
+RUN docker --version
+RUN service docker start
 
 # start webserver
 RUN service php7.2-fpm start
@@ -63,17 +70,12 @@ RUN tar xvzf geckodriver-v0.21.0-linux64.tar.gz
 RUN apt install -y default-jre
 
 #install xdebug (code-coverage)
-RUN apt install php-xdebug
+RUN apt install php7.2-xdebug
 COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 
 #dumb-init
 RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64.deb
 RUN dpkg -i dumb-init_*.deb
-
-# docker
-RUN curl -fsSL get.docker.com | CHANNEL=stable sh
-RUN service docker start && docker --version
-
 
 
 # docker-compose
@@ -85,6 +87,12 @@ RUN docker-compose --version
 # Example: source /docker-lib.sh && start_docker
 # credits https://github.com/meAmidos/dcind
 COPY docker-lib.sh /docker-lib.sh
+
+# Install entrykit
+RUN curl -L https://github.com/progrium/entrykit/releases/download/v0.4.0/entrykit_0.4.0_Linux_x86_64.tgz | tar zx && \
+    chmod +x entrykit && \
+    mv entrykit /bin/entrykit && \
+entrykit --symlink
 
 # Expose Ports
 EXPOSE 443
@@ -102,4 +110,3 @@ RUN cat /var/www/html/index.php
 WORKDIR /var/www/html
 
 ENTRYPOINT ["dumb-init", "--", "/start.sh"]
-ENV DEBIAN_FRONTEND teletype

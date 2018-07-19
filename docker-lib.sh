@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Ref: https://github.com/concourse/docker-image-resource/blob/master/assets/common.sh
 
 sanitize_cgroups() {
