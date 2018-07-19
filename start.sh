@@ -9,15 +9,6 @@ if [ $status -ne 0 ]; then
   exit $status
 fi
 
-# Start docker
-echo "Starting Docker "
-service docker start
-status=$?
-if [ $status -ne 0 ]; then
-  echo "Failed to start Docker: $status"
-  exit $status
-fi
-
 
 # Start PHP-fpm
 echo "Starting PHP-fpm "

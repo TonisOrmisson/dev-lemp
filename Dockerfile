@@ -33,14 +33,6 @@ RUN LC_ALL=C.UTF-8  add-apt-repository ppa:ondrej/php
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php7.2 php7.2-fpm php7.2-cli php7.2-mysql php7.2-curl php7.2-gd \
     php7.2-imap php7.2-zip php7.2-ldap php7.2-xml php7.2-mbstring php7.2-intl php7.2-soap php7.2-bcmath
 
-# docker
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-RUN LC_ALL=C.UTF-8 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-RUN apt update && apt install -y docker-ce
-RUN docker --version
-RUN service docker start
-
 # start webserver
 RUN service php7.2-fpm start
 RUN service nginx restart
@@ -78,21 +70,7 @@ RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.
 RUN dpkg -i dumb-init_*.deb
 
 
-# docker-compose
-RUN curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
-RUN chmod +x /usr/local/bin/docker-compose
-RUN docker-compose --version
 
-# Include useful functions to start/stop docker daemon in garden-runc containers in Concourse CI.
-# Example: source /docker-lib.sh && start_docker
-# credits https://github.com/meAmidos/dcind
-COPY docker-lib.sh /docker-lib.sh
-
-# Install entrykit
-RUN curl -L https://github.com/progrium/entrykit/releases/download/v0.4.0/entrykit_0.4.0_Linux_x86_64.tgz | tar zx && \
-    chmod +x entrykit && \
-    mv entrykit /bin/entrykit && \
-entrykit --symlink
 
 # Expose Ports
 EXPOSE 443
