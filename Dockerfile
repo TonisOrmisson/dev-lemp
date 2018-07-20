@@ -87,4 +87,4 @@ ADD html/ /var/www/html/
 RUN cat /var/www/html/index.php
 WORKDIR /var/www/html
 
-ENTRYPOINT ["dumb-init", "--", "/start.sh"]
+CMD ["dumb-init", "--", "/start.sh"]

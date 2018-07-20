@@ -30,7 +30,7 @@ fi
 
 # Start nginx
 echo "Starting nginx .... "
-nginx -g "daemon off;"
+nginx -g "daemon on;"
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start nginx: $status"
