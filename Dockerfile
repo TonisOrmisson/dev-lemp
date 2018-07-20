@@ -69,7 +69,11 @@ COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64.deb
 RUN dpkg -i dumb-init_*.deb
 
-
+# add bitbucket & github as known hosts
+RUN mkdir ~/.ssh
+RUN ssh-keyscan bitbucket.org >> ~/.ssh/known_hosts
+RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN chmod -R 600 ~/.ssh
 
 
 # Expose Ports
