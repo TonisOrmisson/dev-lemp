@@ -70,10 +70,10 @@ RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.
 RUN dpkg -i dumb-init_*.deb
 
 # add bitbucket & github as known hosts
-RUN mkdir ~/.ssh
-RUN ssh-keyscan bitbucket.org >> ~/.ssh/known_hosts
-RUN ssh-keyscan github.com >> ~/.ssh/known_hosts
-RUN chmod -R 600 ~/.ssh
+RUN mkdir /root/.ssh
+RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
+RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
+RUN chmod -R 600 /root/.ssh
 
 
 # Expose Ports
