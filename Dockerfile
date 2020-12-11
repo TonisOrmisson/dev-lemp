@@ -1,5 +1,19 @@
-FROM ubuntu:xenial
+FROM ubuntu:focal
 MAINTAINER Tõnis Ormisson <tonis@andmemasin.eu>
+
+## for apt to be noninteractive
+ENV DEBIAN_FRONTEND noninteractive
+ENV DEBCONF_NONINTERACTIVE_SEEN true
+
+## preesed tzdata, update package index, upgrade packages and install needed software
+RUN truncate -s0 /tmp/preseed.cfg; \
+    echo "tzdata tzdata/Areas select Europe" >> /tmp/preseed.cfg; \
+    echo "tzdata tzdata/Zones/Europe select Berlin" >> /tmp/preseed.cfg; \
+    debconf-set-selections /tmp/preseed.cfg && \
+    rm -f /etc/timezone /etc/localtime && \
+    apt-get update && \
+    apt-get install -y tzdata
+
 
 # update
 RUN apt update && apt-get install -y --no-install-recommends apt-utils systemd
@@ -30,11 +44,11 @@ RUN find /var/lib/mysql -type f -exec touch {} \; && service mysql start && serv
 
 # install php
 RUN LC_ALL=C.UTF-8  add-apt-repository ppa:ondrej/php
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php7.2 php7.2-fpm php7.2-cli php7.2-mysql php7.2-curl php7.2-gd \
-    php7.2-imap php7.2-zip php7.2-ldap php7.2-xml php7.2-mbstring php7.2-intl php7.2-soap php7.2-bcmath
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php7.4 php7.4-fpm php7.4-cli php7.4-mysql php7.4-curl php7.4-gd \
+    php7.4-imap php7.4-zip php7.4-ldap php7.4-xml php7.4-mbstring php7.4-intl php7.4-soap php7.4-bcmath
 
 # start webserver
-RUN service php7.2-fpm start
+RUN service php7.4-fpm start
 RUN service nginx restart
 
 
@@ -45,9 +59,9 @@ RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
 RUN composer
 
 # install phpunit
-RUN wget https://phar.phpunit.de/phpunit-6.5.9.phar
-RUN chmod +x phpunit-6.5.9.phar
-RUN mv phpunit-6.5.9.phar /usr/local/bin/phpunit
+RUN wget https://phar.phpunit.de/phpunit-9.5.0.phar
+RUN chmod +x phpunit-9.5.0.phar
+RUN mv phpunit-9.5.0.phar /usr/local/bin/phpunit
 RUN phpunit --version
 
 
@@ -56,17 +70,17 @@ RUN apt -y install npm nodejs firefox
 RUN firefox -v
 
 # get selenium for testing
-RUN wget "https://selenium-release.storage.googleapis.com/3.13/selenium-server-standalone-3.13.0.jar"
-RUN wget "https://github.com/mozilla/geckodriver/releases/download/v0.21.0/geckodriver-v0.21.0-linux64.tar.gz"
-RUN tar xvzf geckodriver-v0.21.0-linux64.tar.gz
+RUN wget "https://selenium-release.storage.googleapis.com/3.141/selenium-server-standalone-3.141.59.jar"
+RUN wget "https://github.com/mozilla/geckodriver/releases/download/v0.28.0/geckodriver-v0.28.0-linux64.tar.gz"
+RUN tar xvzf geckodriver-v0.28.0-linux64.tar.gz
 RUN apt install -y default-jre
 
 #install xdebug (code-coverage)
-RUN apt install php7.2-xdebug
+RUN apt install php7.4-xdebug
 COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 
 #dumb-init
-RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64.deb
+RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.4/dumb-init_1.2.4_amd64.deb
 RUN dpkg -i dumb-init_*.deb
 
 # add bitbucket & github as known hosts
@@ -89,6 +103,10 @@ RUN rm -rf /var/www/html/*
 ADD html/ /var/www/html/
 
 RUN cat /var/www/html/index.php
+
+## cleanup of files from setup
+RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 WORKDIR /var/www/html
 
 CMD ["dumb-init", "--", "/start.sh"]

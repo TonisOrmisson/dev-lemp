@@ -6,7 +6,7 @@ find /var/lib/mysql -type f -exec touch {} \; && service mysql start
 
 # Start PHP-fpm
 echo "Starting PHP-fpm "
-service php7.2-fpm start
+service php7.4-fpm start
 
 # Start selenium
 echo "Starting Selenium ... "
