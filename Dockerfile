@@ -96,8 +96,8 @@ EXPOSE 80
 EXPOSE 3306
 
 
-COPY start.sh start.sh
-RUN chmod a+x start.sh
+COPY start.sh /start.sh
+RUN chmod a+x /start.sh
 
 RUN rm -rf /var/www/html/*
 ADD html/ /var/www/html/
