@@ -110,6 +110,11 @@ RUN cat /var/www/html/index.php
 ## cleanup of files from setup
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-WORKDIR /var/www/html
+COPY start.sh /start.sh
+RUN chmod a+x /start.sh
+RUN ls
 
-CMD ["dumb-init", "--", "/start.sh"]
+##WORKDIR /var/www/html
+
+
+CMD ["dumb-init", "--", "sh", "/start.sh"]
