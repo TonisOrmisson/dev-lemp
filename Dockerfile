@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 MAINTAINER Tõnis Ormisson <tonis@andmemasin.eu>
 
 ## for apt to be noninteractive
@@ -11,8 +11,8 @@ RUN truncate -s0 /tmp/preseed.cfg; \
     echo "tzdata tzdata/Zones/Europe select Berlin" >> /tmp/preseed.cfg; \
     debconf-set-selections /tmp/preseed.cfg && \
     rm -f /etc/timezone /etc/localtime && \
-    apt-get update && \
-    apt-get install -y tzdata
+    apt update && \
+    apt install -y tzdata && cat /etc/timezone
 
 
 # update
@@ -29,58 +29,56 @@ RUN apt install -y nginx
 COPY nginx/default /etc/nginx/sites-available/default
 
 # Install MySQL
-RUN echo mysql-server mysql-server/root_password password root | debconf-set-selections;\
-    echo mysql-server mysql-server/root_password_again password root | debconf-set-selections;\
-    apt-get install -y mysql-server mysql-client libmysqlclient-dev
+RUN echo mariadb-server mariadb-server/root_password password root | debconf-set-selections;\
+    echo mariadb-server mariadb-server/root_password_again password root | debconf-set-selections;\
+    apt-get install -y mariadb-server mariadb-client libmysqlclient-dev
 
 # start mysql
-RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/mysql.conf.d/mysqld.cnf
-RUN find /var/lib/mysql -type f -exec touch {} \; && service mysql start
+RUN grep -e bind-address -r /etc/mysql
+RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/mariadb.conf.d/50-server.cnf
+RUN grep -e bind-address -r /etc/mysql
 
-## aallow mysql user connections from any host
-RUN find /var/lib/mysql -type f -exec touch {} \; && service mysql start && service mysql start && mysql -uroot -proot mysql  -e "update user set host='%' where user='root' and host='localhost';flush privileges; CREATE DATABASE test;"
-
+## allow mysql user connections from any host
+RUN service mariadb start && mysql -uroot -proot mysql  -e "RENAME USER 'root'@'localhost' TO 'root'@'%';"
+RUN service mariadb start && service mariadb status && mysql -uroot -proot mysql  -e "SELECT Host, User from mysql.user;"
 
 
 # install php
 RUN LC_ALL=C.UTF-8  add-apt-repository ppa:ondrej/php
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php7.4 php7.4-fpm php7.4-cli php7.4-mysql php7.4-curl php7.4-gd \
-    php7.4-imap php7.4-zip php7.4-ldap php7.4-xml php7.4-mbstring php7.4-intl php7.4-soap php7.4-bcmath
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php8.0 php8.0-fpm php8.0-cli php8.0-mysql php8.0-curl php8.0-gd \
+    php8.0-imap php8.0-zip php8.0-ldap php8.0-xml php8.0-mbstring php8.0-intl php8.0-soap php8.0-bcmath
 
 # start webserver
-RUN service php7.4-fpm start
+RUN service php8.0-fpm start
 RUN service nginx restart
-
-
 
 # install composer
 RUN curl -sS https://getcomposer.org/installer -o composer-setup.php
 RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-RUN composer
+RUN composer -v
 
 # install phpunit
-RUN wget https://phar.phpunit.de/phpunit-9.5.0.phar
-RUN chmod +x phpunit-9.5.0.phar
-RUN mv phpunit-9.5.0.phar /usr/local/bin/phpunit
+RUN apt -y install phpunit
 RUN phpunit --version
 
-
-# install firefox for tests
-RUN apt -y install npm nodejs firefox
-RUN firefox -v
-
 # get selenium for testing
-RUN wget "https://selenium-release.storage.googleapis.com/3.141/selenium-server-standalone-3.141.59.jar"
-RUN wget "https://github.com/mozilla/geckodriver/releases/download/v0.28.0/geckodriver-v0.28.0-linux64.tar.gz"
-RUN tar xvzf geckodriver-v0.28.0-linux64.tar.gz
-RUN apt install -y default-jre
+RUN wget "https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz"
+RUN tar xvzf geckodriver-v0.31.0-linux64.tar.gz
+RUN mv geckodriver* /usr/local/bin/
+RUN geckodriver --version
+
+RUN wget "https://selenium-release.storage.googleapis.com/3.7/selenium-server-standalone-3.7.1.jar"
+RUN apt -y install default-jre
+RUN export MOZ_HEADLESS=1 && export MOZ_HEADLESS_WIDTH=1280 && export MOZ_HEADLESS_HEIGHT=1024
+RUN java -jar selenium-server-standalone-3.7.1.jar -enablePassThrough false > /dev/null 2> /dev/null &
+
 
 #install xdebug (code-coverage)
-RUN apt install php7.4-xdebug
+RUN apt install php8.0-xdebug
 COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 
 #dumb-init
-RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.4/dumb-init_1.2.4_amd64.deb
+RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_amd64.deb
 RUN dpkg -i dumb-init_*.deb
 
 # add bitbucket & github as known hosts

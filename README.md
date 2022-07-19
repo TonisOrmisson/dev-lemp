@@ -3,10 +3,10 @@ A docker LEMP image for development &amp; testing
 
 # Environment
 
- - Ubuntu Bionic 20.04 LTS
- - PHP 7.4 FPM
+ - Ubuntu Jammy 22.04 LTS
+ - PHP 8.0 FPM
  - Nginx
- - MySql
+ - MariaDb
  
  For testing: 
  - xdebug (for code-coverage)
