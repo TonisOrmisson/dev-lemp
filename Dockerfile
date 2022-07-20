@@ -39,9 +39,10 @@ RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysq
 RUN grep -e bind-address -r /etc/mysql
 
 ## allow mysql user connections from any host
-RUN service mariadb start && mysql  -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'root';"
+RUN service mariadb start && mysql -e "RENAME USER 'root'@'localhost' TO 'root'@'%';"
+RUN service mariadb start && mysql -e "ALTER USER 'root'@'%' IDENTIFIED BY 'root';"
 RUN service mariadb start && mysql -uroot -proot -e "DELETE FROM mysql.user WHERE User='';"
-RUN service mariadb start && mysql -uroot -proot -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+RUN service mariadb start && mysql -uroot -proot -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1', '%');"
 RUN service mariadb start && mysql -uroot -proot -e "DROP DATABASE IF EXISTS test;"
 RUN service mariadb start && mysql -uroot -proot -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';"
 RUN service mariadb start && mysql -uroot -proot -e "FLUSH PRIVILEGES;"
