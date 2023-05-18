@@ -93,6 +93,7 @@ RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 RUN chmod -R 600 /root/.ssh
 
+RUN apt install -y nodejs npm
 
 # Expose Ports
 EXPOSE 443
