@@ -4,7 +4,7 @@ A docker LEMP image for development &amp; testing
 # Environment
 
  - Ubuntu Jammy 22.04 LTS
- - PHP 8.0 FPM
+ - PHP 8.3 FPM
  - Nginx
  - MariaDb
  

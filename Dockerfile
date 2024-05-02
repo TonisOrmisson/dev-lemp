@@ -51,11 +51,11 @@ RUN service mariadb start && mysql -uroot -proot -e "show databases;"
 
 # install php
 RUN LC_ALL=C.UTF-8  add-apt-repository ppa:ondrej/php
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php8.0 php8.0-fpm php8.0-cli php8.0-mysql php8.0-curl php8.0-gd \
-    php8.0-imap php8.0-zip php8.0-ldap php8.0-xml php8.0-mbstring php8.0-intl php8.0-soap php8.0-bcmath
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php8.3 php8.3-fpm php8.3-cli php8.3-mysql php8.3-curl php8.3-gd \
+    php8.3-imap php8.3-zip php8.3-ldap php8.3-xml php8.3-mbstring php8.3-intl php8.3-soap php8.3-bcmath
 
 # start webserver
-RUN service php8.0-fpm start
+RUN service php8.3-fpm start
 RUN service nginx restart
 
 # install composer
@@ -68,8 +68,8 @@ RUN apt -y install phpunit
 RUN phpunit --version
 
 # get selenium for testing
-RUN wget "https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz"
-RUN tar xvzf geckodriver-v0.31.0-linux64.tar.gz
+RUN wget "https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux64.tar.gz"
+RUN tar xvzf geckodriver-v0.34.0-linux64.tar.gz
 RUN mv geckodriver* /usr/local/bin/
 RUN geckodriver --version
 
@@ -80,7 +80,7 @@ RUN java -jar selenium-server-standalone-3.7.1.jar -enablePassThrough false > /d
 
 
 #install xdebug (code-coverage)
-RUN apt install php8.0-xdebug
+RUN apt install php8.3-xdebug
 COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 
 #dumb-init
