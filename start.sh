@@ -10,8 +10,8 @@ if [ $status -ne 0 ]; then
 fi
 
 # Start PHP-fpm
-echo "Starting PHP-fpm 8.3 "
-service php8.3-fpm start
+echo "Starting PHP-fpm 8.2 "
+service php8.2-fpm start
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start PHP-fpm: $status"

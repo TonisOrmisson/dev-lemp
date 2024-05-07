@@ -51,11 +51,11 @@ RUN service mariadb start && mysql -uroot -proot -e "show databases;"
 
 # install php
 RUN LC_ALL=C.UTF-8  add-apt-repository ppa:ondrej/php
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php8.3 php8.3-fpm php8.3-cli php8.3-mysql php8.3-curl php8.3-gd \
-    php8.3-imap php8.3-zip php8.3-ldap php8.3-xml php8.3-mbstring php8.3-intl php8.3-soap php8.3-bcmath
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php8.2 php8.2-fpm php8.2-cli php8.2-mysql php8.2-curl php8.2-gd \
+    php8.2-imap php8.2-zip php8.2-ldap php8.2-xml php8.2-mbstring php8.2-intl php8.2-soap php8.2-bcmath
 
 # start webserver
-RUN service php8.3-fpm start
+RUN service php8.2-fpm start
 RUN service nginx restart
 
 # install composer
@@ -80,7 +80,7 @@ RUN java -jar selenium-server-standalone-3.7.1.jar -enablePassThrough false > /d
 
 
 #install xdebug (code-coverage)
-RUN apt install php8.3-xdebug
+RUN apt install php8.2-xdebug
 COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 
 #dumb-init
