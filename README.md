@@ -3,14 +3,14 @@ A docker LEMP image for development &amp; testing
 
 # Environment
 
- - Ubuntu Jammy 22.04 LTS
- - PHP 8.2 FPM
+ - Ubuntu Noble 24.04 LTS
+ - PHP 8.3 FPM
  - Nginx
  - MariaDb
  
  For testing: 
  - xdebug (for code-coverage)
- - selenium server (for testing)
+ - selenium server (for testing) (standalone 3.9.1)
  - firefox (for headless testing)
  - phpunit 9.5.0
  

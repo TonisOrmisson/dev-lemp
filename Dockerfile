@@ -1,4 +1,4 @@
-FROM ubuntu:jammy
+FROM ubuntu:noble
 MAINTAINER Tõnis Ormisson <tonis@andmemasin.eu>
 
 ## for apt to be noninteractive
@@ -51,11 +51,11 @@ RUN service mariadb start && mysql -uroot -proot -e "show databases;"
 
 # install php
 RUN LC_ALL=C.UTF-8  add-apt-repository ppa:ondrej/php
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php8.2 php8.2-fpm php8.2-cli php8.2-mysql php8.2-curl php8.2-gd \
-    php8.2-imap php8.2-zip php8.2-ldap php8.2-xml php8.2-mbstring php8.2-intl php8.2-soap php8.2-bcmath
+RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php8.3 php8.3-fpm php8.3-cli php8.3-mysql php8.3-curl php8.3-gd \
+    php8.3-imap php8.3-zip php8.3-ldap php8.3-xml php8.3-mbstring php8.3-intl php8.3-soap php8.3-bcmath
 
 # start webserver
-RUN service php8.2-fpm start
+RUN service php8.3-fpm start
 RUN service nginx restart
 
 # install composer
@@ -68,19 +68,19 @@ RUN apt -y install phpunit
 RUN phpunit --version
 
 # get selenium for testing
-RUN wget "https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux64.tar.gz"
-RUN tar xvzf geckodriver-v0.34.0-linux64.tar.gz
+RUN wget "https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz"
+RUN tar xvzf geckodriver-v0.36.0-linux64.tar.gz
 RUN mv geckodriver* /usr/local/bin/
 RUN geckodriver --version
 
-RUN wget "https://selenium-release.storage.googleapis.com/3.7/selenium-server-standalone-3.7.1.jar"
+RUN wget "https://selenium-release.storage.googleapis.com/3.9/selenium-server-standalone-3.9.1.jar"
 RUN apt -y install default-jre
 RUN export MOZ_HEADLESS=1 && export MOZ_HEADLESS_WIDTH=1280 && export MOZ_HEADLESS_HEIGHT=1024
-RUN java -jar selenium-server-standalone-3.7.1.jar -enablePassThrough false > /dev/null 2> /dev/null &
+RUN java -jar selenium-server-standalone-3.9.1.jar -enablePassThrough false > /dev/null 2> /dev/null &
 
 
 #install xdebug (code-coverage)
-RUN apt install php8.2-xdebug
+RUN apt install php8.3-xdebug
 COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
 
 #dumb-init
@@ -88,7 +88,6 @@ RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.
 RUN dpkg -i dumb-init_*.deb
 
 # add bitbucket & github as known hosts
-RUN mkdir /root/.ssh
 RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 RUN chmod -R 600 /root/.ssh
