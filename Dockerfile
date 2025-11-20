@@ -54,6 +54,10 @@ RUN LC_ALL=C.UTF-8  add-apt-repository ppa:ondrej/php
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php8.3 php8.3-fpm php8.3-cli php8.3-mysql php8.3-curl php8.3-gd \
     php8.3-imap php8.3-zip php8.3-ldap php8.3-xml php8.3-mbstring php8.3-intl php8.3-soap php8.3-bcmath
 
+# raise PHP upload/post limits for large files
+RUN printf "upload_max_filesize = 256M\npost_max_size = 256M\nmemory_limit = 512M\n" \
+    | tee /etc/php/8.3/fpm/conf.d/uploads.ini /etc/php/8.3/cli/conf.d/uploads.ini >/dev/null
+
 # start webserver
 RUN service php8.3-fpm start
 RUN service nginx restart
