@@ -1,3 +1,3 @@
 docker build --tag tonisormisson/dev-lemp .
-docker tag tonisormisson/dev-lemp:latest tonisormisson/dev-lemp:1.2.0
+docker tag tonisormisson/dev-lemp:latest tonisormisson/dev-lemp:1.2.3
 docker push tonisormisson/dev-lemp --all-tags
