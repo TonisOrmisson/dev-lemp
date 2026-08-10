@@ -25,5 +25,5 @@ jobs:
         with:
           username: tonisormisson
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: peter-evans/dockerhub-description
+          repository: tonisormisson/dev-lemp
 
