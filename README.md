@@ -4,7 +4,7 @@ A docker LEMP image for development &amp; testing
 # Environment
 
  - Ubuntu Noble 24.04 LTS
- - PHP 8.3 FPM
+ - PHP 8.4 FPM
  - Nginx
  - MariaDb
  
