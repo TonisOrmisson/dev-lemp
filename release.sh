@@ -1,3 +1,10 @@
-docker build --tag tonisormisson/dev-lemp .
-docker tag tonisormisson/dev-lemp:latest tonisormisson/dev-lemp:1.2.4
-docker push tonisormisson/dev-lemp --all-tags
+#!/bin/sh
+set -eu
+
+IMAGE=tonisormisson/dev-lemp
+VERSION=1.3.0
+
+docker build --pull --tag "$IMAGE:latest" .
+docker tag "$IMAGE:latest" "$IMAGE:$VERSION"
+docker push "$IMAGE:latest"
+docker push "$IMAGE:$VERSION"

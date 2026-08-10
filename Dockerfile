@@ -1,125 +1,130 @@
-FROM ubuntu:noble
-MAINTAINER Tõnis Ormisson <tonis@andmemasin.eu>
+FROM ubuntu:24.04
+LABEL maintainer="Tõnis Ormisson <tonis@andmemasin.eu>"
 
-## for apt to be noninteractive
-ENV DEBIAN_FRONTEND noninteractive
-ENV DEBCONF_NONINTERACTIVE_SEEN true
+ARG NGINX_VERSION=1.30.4-1~noble
+ARG SELENIUM_VERSION=4.46.0
+ARG GECKODRIVER_VERSION=0.37.1
 
-## preesed tzdata, update package index, upgrade packages and install needed software
-RUN truncate -s0 /tmp/preseed.cfg; \
-    echo "tzdata tzdata/Areas select Europe" >> /tmp/preseed.cfg; \
-    echo "tzdata tzdata/Zones/Europe select Berlin" >> /tmp/preseed.cfg; \
-    debconf-set-selections /tmp/preseed.cfg && \
-    rm -f /etc/timezone /etc/localtime && \
-    apt update && \
-    apt install -y tzdata && cat /etc/timezone
+ENV DEBIAN_FRONTEND=noninteractive \
+    DEBCONF_NONINTERACTIVE_SEEN=true \
+    SELENIUM_JAR=/opt/selenium/selenium-server-4.46.0.jar
 
+# Apply current Ubuntu security updates and install the tooling needed by the
+# repositories and development stack.
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
+        apt-transport-https \
+        apt-utils \
+        ca-certificates \
+        curl \
+        default-jre \
+        dnsutils \
+        dumb-init \
+        git \
+        gnupg \
+        iputils-ping \
+        nano \
+        net-tools \
+        nmap \
+        openssh-client \
+        software-properties-common \
+        telnet \
+        unzip \
+        wget
 
-# update
-RUN apt update && apt-get install -y --no-install-recommends apt-utils systemd
+# Install the current nginx stable release from nginx.org.
+RUN install -d -m 0755 /etc/apt/keyrings \
+    && curl -fsSL https://nginx.org/keys/nginx_signing.key \
+        | gpg --dearmor -o /etc/apt/keyrings/nginx.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nginx.gpg] https://nginx.org/packages/ubuntu/ noble nginx" \
+        > /etc/apt/sources.list.d/nginx.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nginx=${NGINX_VERSION} \
+    && sed -i 's/^user .*/user www-data;/' /etc/nginx/nginx.conf
+COPY nginx/default /etc/nginx/conf.d/default.conf
 
-# generic tools
-RUN apt install -y nano wget net-tools git unzip curl iputils-ping telnet dnsutils nmap \
-    software-properties-common apt-transport-https
+# Install the current MariaDB LTS series and configure the development root account.
+RUN curl -fsSL https://r.mariadb.com/downloads/mariadb_repo_setup \
+        | bash -s -- --mariadb-server-version=mariadb-11.8 \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends mariadb-client mariadb-server libmariadb-dev \
+    && sed -i -E 's/^bind-address\s*=\s*127\.0\.0\.1/bind-address = 0.0.0.0/' /etc/mysql/mariadb.conf.d/50-server.cnf \
+    && service mariadb start \
+    && mariadb -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'root'; CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'root'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; DELETE FROM mysql.global_priv WHERE User=''; DROP DATABASE IF EXISTS test; FLUSH PRIVILEGES;"
 
-# nginx
-RUN apt install -y nginx
+# Install PHP 8.4 and required extensions.
+RUN LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        php8.4 \
+        php8.4-bcmath \
+        php8.4-cli \
+        php8.4-curl \
+        php8.4-fpm \
+        php8.4-gd \
+        php8.4-imap \
+        php8.4-intl \
+        php8.4-ldap \
+        php8.4-mbstring \
+        php8.4-mysql \
+        php8.4-soap \
+        php8.4-xml \
+        php8.4-xdebug \
+        php8.4-zip \
+        phpunit
 
-## nginx conf
-COPY nginx/default /etc/nginx/sites-available/default
-
-# Install MySQL
-RUN echo mariadb-server mariadb-server/root_password password root | debconf-set-selections;\
-    echo mariadb-server mariadb-server/root_password_again password root | debconf-set-selections;\
-    apt-get install -y mariadb-server mariadb-client libmysqlclient-dev
-
-# start mysql
-RUN grep -e bind-address -r /etc/mysql
-RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/mariadb.conf.d/50-server.cnf
-RUN grep -e bind-address -r /etc/mysql
-
-## allow mysql user connections from any host
-RUN service mariadb start && mysql -e "RENAME USER 'root'@'localhost' TO 'root'@'%';"
-RUN service mariadb start && mysql -e "ALTER USER 'root'@'%' IDENTIFIED BY 'root';"
-RUN service mariadb start && mysql -uroot -proot -e "DELETE FROM mysql.user WHERE User='';"
-RUN service mariadb start && mysql -uroot -proot -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1', '%');"
-RUN service mariadb start && mysql -uroot -proot -e "DROP DATABASE IF EXISTS test;"
-RUN service mariadb start && mysql -uroot -proot -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';"
-RUN service mariadb start && mysql -uroot -proot -e "FLUSH PRIVILEGES;"
-RUN service mariadb start && mysql -uroot -proot -e "show databases;"
-
-
-# install php
-RUN LC_ALL=C.UTF-8  add-apt-repository ppa:ondrej/php
-RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y php8.4 php8.4-fpm php8.4-cli php8.4-mysql php8.4-curl php8.4-gd \
-    php8.4-imap php8.4-zip php8.4-ldap php8.4-xml php8.4-mbstring php8.4-intl php8.4-soap php8.4-bcmath
-
-# raise PHP upload/post limits for large files
+# Raise PHP upload/post limits for large files.
 RUN printf "upload_max_filesize = 256M\npost_max_size = 256M\nmemory_limit = 512M\n" \
-    | tee /etc/php/8.4/fpm/conf.d/uploads.ini /etc/php/8.4/cli/conf.d/uploads.ini >/dev/null
+        | tee /etc/php/8.4/fpm/conf.d/uploads.ini /etc/php/8.4/cli/conf.d/uploads.ini >/dev/null
+COPY xdebug/xdebug.ini /etc/php/8.4/mods-available/xdebug-dev.ini
+RUN phpenmod xdebug-dev \
+    && service php8.4-fpm start \
+    && service nginx restart
 
-# start webserver
-RUN service php8.4-fpm start
-RUN service nginx restart
+# Install Composer and current Node.js LTS.
+RUN curl -fsSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+    && composer --version \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" \
+        > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs
 
-# install composer
-RUN curl -sS https://getcomposer.org/installer -o composer-setup.php
-RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-RUN composer -v
+# Install current Firefox stable for browser tests.
+RUN curl -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg \
+        | gpg --dearmor -o /etc/apt/keyrings/packages.mozilla.org.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.gpg] https://packages.mozilla.org/apt mozilla main" \
+        > /etc/apt/sources.list.d/mozilla.list \
+    && printf "Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000\n" \
+        > /etc/apt/preferences.d/mozilla \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends firefox
 
-# install phpunit
-RUN apt -y install phpunit
-RUN phpunit --version
+# Install current Selenium and geckodriver releases.
+RUN install -d /opt/selenium \
+    && curl -fsSL "https://github.com/SeleniumHQ/selenium/releases/download/selenium-${SELENIUM_VERSION}/selenium-server-${SELENIUM_VERSION}.jar" \
+        -o "${SELENIUM_JAR}" \
+    && curl -fsSL "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux64.tar.gz" \
+        -o /tmp/geckodriver.tar.gz \
+    && tar -xzf /tmp/geckodriver.tar.gz -C /usr/local/bin \
+    && java -jar "${SELENIUM_JAR}" standalone --help >/dev/null \
+    && geckodriver --version
 
-# get selenium for testing
-RUN wget "https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz"
-RUN tar xvzf geckodriver-v0.36.0-linux64.tar.gz
-RUN mv geckodriver* /usr/local/bin/
-RUN geckodriver --version
+# Add Bitbucket and GitHub as known hosts for development checkouts.
+RUN install -d -m 700 /root/.ssh \
+    && ssh-keyscan bitbucket.org github.com >> /root/.ssh/known_hosts \
+    && chmod 600 /root/.ssh/known_hosts
 
-RUN wget "https://selenium-release.storage.googleapis.com/3.9/selenium-server-standalone-3.9.1.jar"
-RUN apt -y install default-jre
-RUN export MOZ_HEADLESS=1 && export MOZ_HEADLESS_WIDTH=1280 && export MOZ_HEADLESS_HEIGHT=1024
-RUN java -jar selenium-server-standalone-3.9.1.jar -enablePassThrough false > /dev/null 2> /dev/null &
-
-
-#install xdebug (code-coverage)
-RUN apt install php8.4-xdebug
-COPY xdebug/xdebug.ini /usr/local/etc/php/conf.d/xdebug-dev.ini
-
-#dumb-init
-RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_amd64.deb
-RUN dpkg -i dumb-init_*.deb
-
-# add bitbucket & github as known hosts
-RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-RUN chmod -R 600 /root/.ssh
-
-RUN apt install -y nodejs npm
-
-# Expose Ports
-EXPOSE 443
-EXPOSE 80
-EXPOSE 3306
-
+EXPOSE 443 80 3306
 
 COPY start.sh /start.sh
-RUN chmod a+x /start.sh
-
-RUN rm -rf /var/www/html/*
+RUN chmod a+x /start.sh \
+    && rm -rf /var/www/html/*
 ADD html/ /var/www/html/
 
-RUN cat /var/www/html/index.php
-
-## cleanup of files from setup
+# Remove package and download caches from the final image.
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-COPY start.sh /start.sh
-RUN chmod a+x /start.sh
-RUN ls
-
-##WORKDIR /var/www/html
-
 
 CMD ["dumb-init", "--", "sh", "/start.sh"]

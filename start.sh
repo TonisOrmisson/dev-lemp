@@ -1,38 +1,20 @@
+#!/bin/sh
+set -e
 
-# Start mysql
+# Start MariaDB.
+echo "Starting MariaDB ..."
 service mariadb start
-echo "Starting mariadb s"
-service mariadb start
-status=$?
-if [ $status -ne 0 ]; then
-  echo "Failed to start mariadb: $status"
-  exit $status
-fi
 
-# Start PHP-fpm
-echo "Starting PHP-fpm 8.2 "
-service php8.2-fpm start
-status=$?
-if [ $status -ne 0 ]; then
-  echo "Failed to start PHP-fpm: $status"
-  exit $status
-fi
+# Start PHP-FPM.
+echo "Starting PHP-FPM 8.4 ..."
+service php8.4-fpm start
 
-# Start selenium
-echo "Starting Selenium ... "
-export MOZ_HEADLESS=1 && java -jar selenium-server-standalone-*.jar -enablePassThrough false  > /var/log/selenium.log 2> /var/log/selenium_error.log &
-status=$?
-if [ $status -ne 0 ]; then
-  echo "Failed to start Selenium: $status"
-  exit $status
-fi
+# Start Selenium for browser tests.
+echo "Starting Selenium ..."
+export MOZ_HEADLESS=1
+java -jar "$SELENIUM_JAR" standalone \
+    > /var/log/selenium.log 2> /var/log/selenium_error.log &
 
-# Start nginx
-echo "Starting nginx .... "
-nginx -g "daemon off;"
-status=$?
-if [ $status -ne 0 ]; then
-  echo "Failed to start nginx: $status"
-  exit $status
-fi
-
+# Keep nginx in the foreground as the container process.
+echo "Starting nginx ..."
+exec nginx -g "daemon off;"

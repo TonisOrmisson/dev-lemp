@@ -1,18 +1,24 @@
 # dev-lemp
-A docker LEMP image for development &amp; testing
 
-# Environment
+A Docker LEMP image for development and testing.
 
- - Ubuntu Noble 24.04 LTS
- - PHP 8.4 FPM
- - Nginx
- - MariaDb
- 
- For testing: 
- - xdebug (for code-coverage)
- - selenium server (for testing) (standalone 3.9.1)
- - firefox (for headless testing)
- - phpunit 9.5.0
- 
-# example run
-docker run -d --network=dev1 --name lemptest -p 8888:80 tonisormisson/dev-lemp:latest
+## Environment
+
+- Ubuntu 24.04 LTS, with current security updates at build time
+- PHP 8.4 FPM
+- nginx 1.30 stable
+- MariaDB 11.8 LTS
+- Node.js 24 LTS
+
+For testing:
+
+- Xdebug 3
+- Selenium Server 4.46
+- Firefox stable and geckodriver 0.37
+- PHPUnit
+
+## Example
+
+```sh
+docker run -d --network=dev1 --name lemptest -p 8888:80 tonisormisson/dev-lemp:1.3.0
+```
